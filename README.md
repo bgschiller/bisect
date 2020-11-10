@@ -68,7 +68,3 @@ for (const pet of sa) {
   console.log(pet);
 }
 ```
-
-## Publishing to NPM
-
-We recommend using [np](https://github.com/sindresorhus/np).
