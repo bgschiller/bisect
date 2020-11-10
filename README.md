@@ -1,102 +1,73 @@
-# TSDX User Guide
+# @bgschiller/bisect
 
-Congrats! You just saved yourself hours of work by bootstrapping this project with TSDX. Let’s get you oriented with what’s here and how to use it.
+A reimplementation of Python's bisect library in TypeScript.
 
-> This TSDX setup is meant for developing libraries (not apps!) that can be published to NPM. If you’re looking to build a Node app, you could use `ts-node-dev`, plain `ts-node`, or simple `tsc`.
+## API
 
-> If you’re new to TypeScript, checkout [this handy cheatsheet](https://devhints.io/typescript)
+### bisect_left
 
-## Commands
+Locate the insertion point for `needle` in `arr` to maintain sorted order. The parameters `lo` and `hi` may be used to specify a subset of the list which should be considered; by default the entire list is used. If `needle` is already present in `arr`, the insertion point will be before (to the left of) any existing entries. The return value is suitable for use as the first parameter to `Array.prototype.splice()` assuming that `arr` is already sorted.
 
-TSDX scaffolds your new library inside `/src`.
-
-To run TSDX, use:
-
-```bash
-npm start # or yarn start
+```ts
+function bisect_left<C extends Comparable>(
+  arr: C[],
+  needle: C,
+  lo: number = 0,
+  hi: number = arr.length
+): number;
 ```
 
-This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` causes a rebuild to `/dist`.
+The returned insertion point `i` partitions the array `arr` into two halves so that `arr.slice(lo, i).every(val => val < needle)` for the left side and `arr.slice(i, hi).every(val => val >= x)` for the right side.
 
-To do a one-off build, use `npm run build` or `yarn build`.
+### bisect_right
 
-To run tests, use `npm test` or `yarn test`.
+Similar to `bisect_left()`, but returns an insertion point which comes after (to the right of) any existing entries of `needle` in `arr`.
 
-## Configuration
-
-Code quality is set up for you with `prettier`, `husky`, and `lint-staged`. Adjust the respective fields in `package.json` accordingly.
-
-### Jest
-
-Jest tests are set up to run with `npm test` or `yarn test`.
-
-### Bundle Analysis
-
-[`size-limit`](https://github.com/ai/size-limit) is set up to calculate the real cost of your library with `npm run size` and visualize the bundle with `npm run analyze`.
-
-#### Setup Files
-
-This is the folder structure we set up for you:
-
-```txt
-/src
-  index.tsx       # EDIT THIS
-/test
-  blah.test.tsx   # EDIT THIS
-.gitignore
-package.json
-README.md         # EDIT THIS
-tsconfig.json
+```ts
+function bisect_right<C extends Comparable>(
+  arr: C[],
+  needle: C,
+  lo: number = 0,
+  hi: number = arr.length
+): number;
 ```
 
-### Rollup
+The returned insertion point `i` partitions the array `arr` into two halves so that `arr.slice(lo, i).every(val => val <= x)` for the left side and `arr.slice(i, hi).every(val => val > x)` for the right side.
 
-TSDX uses [Rollup](https://rollupjs.org) as a bundler and generates multiple rollup configs for various module formats and build settings. See [Optimizations](#optimizations) for details.
+### SortedArray
 
-### TypeScript
+In order to work with more complex types than `string | number | Date`, it is useful to have a container that applies a key function and maintains sorted order for you.
 
-`tsconfig.json` is set up to interpret `dom` and `esnext` types, as well as `react` for `jsx`. Adjust according to your needs.
+Check out the source to see what methods exist (it's not too hard to read).
 
-## Continuous Integration
+```ts
+const pets: Pet[] = [
+  { name: 'Heidi', dateOfBirth: new Date(2007, 10, 1), numberLegs: 4 },
+  { name: 'Artemis', dateOfBirth: new Date(2014, 3, 1), numberLegs: 4 },
+  { name: 'Some-Snake', dateOfBirth: new Date(2015, 3, 5), numberLegs: 0 },
+  { name: 'Sully', dateOfBirth: new Date(2005, 1, 1), numberLegs: 3 },
+];
 
-### GitHub Actions
+const sa = new SortedArray(p => p.name, pets);
 
-Two actions are added by default:
+function petsAreEqual(p1: Pet, p2: Pet): boolean {
+  return p1.name === p2.name;
+}
 
-- `main` which installs deps w/ cache, lints, tests, and builds on all pushes against a Node and OS matrix
-- `size` which comments cost comparison of your library on every pull request using [`size-limit`](https://github.com/ai/size-limit)
+sa.contains(
+  { name: 'Heidi', dateOfBirth: new Date(2007, 10, 1), numberLegs: 4 },
+  petsAreEqual //(uses object equality if no second param is passed)
+); // true
+sa.insert({
+  name: 'Colt',
+  dateOfBirth: new Date(2010, 3, 1),
+  numberOfLegs: 4,
+}); // false
 
-## Optimizations
-
-Please see the main `tsdx` [optimizations docs](https://github.com/palmerhq/tsdx#optimizations). In particular, know that you can take advantage of development-only optimizations:
-
-```js
-// ./types/index.d.ts
-declare var __DEV__: boolean;
-
-// inside your code...
-if (__DEV__) {
-  console.log('foo');
+for (const pet of sa) {
+  console.log(pet);
 }
 ```
-
-You can also choose to install and use [invariant](https://github.com/palmerhq/tsdx#invariant) and [warning](https://github.com/palmerhq/tsdx#warning) functions.
-
-## Module Formats
-
-CJS, ESModules, and UMD module formats are supported.
-
-The appropriate paths are configured in `package.json` and `dist/index.js` accordingly. Please report if any issues are found.
-
-## Named Exports
-
-Per Palmer Group guidelines, [always use named exports.](https://github.com/palmerhq/typescript#exports) Code split inside your React app instead of your React library.
-
-## Including Styles
-
-There are many ways to ship styles, including with CSS-in-JS. TSDX has no opinion on this, configure how you like.
-
-For vanilla CSS, you can include it at the root directory and add it to the `files` section in your `package.json`, so that it can be imported separately by your users and run through their bundler's loader.
 
 ## Publishing to NPM
 
